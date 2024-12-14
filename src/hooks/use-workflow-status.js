@@ -37,10 +37,15 @@ export const useWorkflowStatus = (runId, options = {}) => {
                 setRun(data);
                 setError(null);
 
-                if (data.status === 'completed') {
-                    onComplete?.(data);
-                } else if (data.status === 'failed') {
-                    onError?.(new Error(data.error || 'Workflow failed'));
+                if (data.status === 'completed' || data.status === 'failed') {
+                    if (data.status === 'completed') {
+                        onComplete?.(data);
+                    } else {
+                        onError?.(new Error(data.error || 'Workflow failed'));
+                    }
+                    setIsLoading(false);
+                    options.setIsExecuting?.(false); // Call setIsExecuting if provided
+                    return;
                 } else {
                     const nextInterval = Math.min(
                         currentInterval * pollingBackoff,
