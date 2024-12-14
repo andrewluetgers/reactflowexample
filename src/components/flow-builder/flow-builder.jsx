@@ -35,7 +35,8 @@ export default function FlowBuilder() {
         onError: (error) => {
             console.error('Workflow execution failed:', error);
             setServerRunId(null);
-        }
+        },
+        setIsExecuting // Pass setIsExecuting to the hook
     });
 
 
@@ -171,7 +172,11 @@ export default function FlowBuilder() {
 
     const updateNodeData = useCallback((nodeId, newData) => {
         setNodes(prevNodes => prevNodes.map(node =>
-            node.id === nodeId ? { ...node, data: newData } : node
+            node.id === nodeId ? { 
+                ...node, 
+                data: newData,
+                status: newData.status // Ensure status is copied to top level
+            } : node
         ));
     }, []);
 
@@ -378,6 +383,8 @@ export default function FlowBuilder() {
                 edges: edges
             };
 
+            setIsExecuting(true);
+            
             // Update UI immediately
             setCurrentRun(optimisticRun);
             setRuns(prev => [optimisticRun, ...prev]);
@@ -409,6 +416,7 @@ export default function FlowBuilder() {
             setServerRunId(initialRun.runId);
 
         } catch (error) {
+            setIsExecuting(false);
             console.error('Failed to start workflow:', error);
             // Revert optimistic updates on error
             setCurrentRun(null);
